@@ -9,7 +9,7 @@ function PrintHelpingMessage() {
     echo -e "Usage:"
     echo -e "  * Display helping message: $0 --help"
     echo -e "  * Run JupyterLab         : $0 --notebook"
-    echo -e "  * Run TensorBoard        : $0 --tensorboard [logdir]"
+    echo -e "  * Run TensorBoard        : $0 --tensorboard [project]"
     echo -e ""
 }
 
@@ -26,9 +26,9 @@ while [ $# -gt 0 ]; do
         --tensorboard|-t)
             export COMMAND="tensorboard"
             export CONTAINER="TensorBoard"
-            export LOGDIR=$2
+            export PROJECT=$2
 
-            if [[ "$LOGDIR" == "" ]]; then
+            if [[ "$PROJECT" == "" ]]; then
                PrintHelpingMessage
                exit 1
             fi
@@ -63,11 +63,9 @@ elif [[ $COMMAND == "notebook" ]]; then
         --name $CONTAINER \
         --gpus all \
         --env DATADIR=$WORKDIR/data \
-        --env LOGDIR=$WORKDIR/logs \
         -d \
         -ti \
         -v ${PWD}/projects:$WORKDIR/projects \
-        -v ${PWD}/logs:$WORKDIR/logs \
         -v /hdd/data/nlp:$WORKDIR/data \
         -p 8888:8888 \
         $IMAGE \
@@ -77,10 +75,10 @@ elif [[ $COMMAND == "tensorboard" ]]; then
     docker run \
         --name $CONTAINER \
         -d \
-        -v ${PWD}/logs:$WORKDIR/logs \
+        -v ${PWD}/projects/$PROJECT/tb_logs:$WORKDIR/tb_logs \
         -p 6006:6006 \
         -p 6007:6007 \
         -p 6008:6008 \
         $IMAGE \
-        tensorboard --logdir=$WORKDIR/logs/$LOGDIR/pl_logs --host=0.0.0.0
+        tensorboard --logdir=$WORKDIR/tb_logs --host=0.0.0.0
 fi
